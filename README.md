@@ -1,4 +1,4 @@
-# Check duplicates in input
+# WebGPU Computing
 Simple WebGPU computing example
 
 ---
