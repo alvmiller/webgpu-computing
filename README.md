@@ -4,7 +4,7 @@ Simple WebGPU computing example
 ---
 
 #### Based on:
-https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html
+https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html#a-run-computations-on-the-gpu
 
 ---
 
