@@ -30,7 +30,8 @@ async function compute() {
       @compute @workgroup_size(1) fn computeSomething(
         @builtin(global_invocation_id) id: vec3<u32>
       ) {
-        data[id.x] = data[id.x] * zoom;
+          let i = id.x;
+          data[i] = data[i] * zoom;
       }
     `,
   });
