@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>
+.menu {
+  position: sticky;
+  top: 0;
+  background-color: #F1F1F1;
+  text-align: center;
+}
+</style>
+
+<script type="text/javascript">
+// Based on https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html
+
+async function compute() {
+  const adapter = await navigator.gpu?.requestAdapter();
+  const device = await adapter?.requestDevice();
+  if (!device) {
+    fail('Need a browser that supports WebGPU!');
+    return;
+  }
+
+  const module = device.createShaderModule({
+    code: `
+      @group(0) @binding(0) var<storage, read_write> data: array<f32>;
+
+      const zoom = 4.0;
+      @compute @workgroup_size(1) fn computeSomething(
+        @builtin(global_invocation_id) id: vec3<u32>
+      ) {
+        data[id.x] = data[id.x] * zoom;
+      }
+    `,
+  });
+
+  const pipeline = device.createComputePipeline({
+    layout: 'auto',
+    compute: {
+      module,
+      entryPoint: 'computeSomething',
+    },
+  });
+
+  const input = new Float32Array([1, 3, 5]);
+
+  // Create a buffer on the GPU to hold our computation input and output
+  const workBuffer = device.createBuffer({
+    size: input.byteLength,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+  });
+  // Copy our input data to that buffer
+  device.queue.writeBuffer(workBuffer, 0, input);
+
+  // Create a buffer on the GPU to get a copy of the results
+  const resultBuffer = device.createBuffer({
+    size: input.byteLength,
+    usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+  });
+
+  // Setup a bindGroup to tell the shader which
+  // buffer to use for the computation
+  const bindGroup = device.createBindGroup({
+    layout: pipeline.getBindGroupLayout(0),
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: workBuffer
+        }
+      },
+    ],
+  });
+
+  // Encode commands to do the computation
+  const encoder = device.createCommandEncoder();
+  const pass = encoder.beginComputePass();
+  pass.setPipeline(pipeline);
+  pass.setBindGroup(0, bindGroup);
+  pass.dispatchWorkgroups(input.length);
+  pass.end();
+
+  // Encode a command to copy the results to a mappable buffer.
+  encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
+
+  const commandBuffer = encoder.finish();
+  device.queue.submit([commandBuffer]);
+
+  await resultBuffer.mapAsync(GPUMapMode.READ);
+  const result = new Float32Array(resultBuffer.getMappedRange().slice());
+  resultBuffer.unmap();
+
+  let res_str = "IN array: " + input.toString() + "<br>" +
+                "OUT array: " + result.toString() + "<br>" +
+                "<br>";
+  result_print(res_str);
+}
+
+function fail(msg) {
+  alert(msg);
+}
+
+function result_print(msg) {
+  document.getElementById('results').innerHTML += msg;
+}
+
+function clear_result() {
+  document.getElementById('results').innerHTML = '';
+}
+
+function clear_result_full() {
+  location.reload();
+}
+
+</script>
+</head>
+
+<body>
+  <div class="menu">
+    <hr>
+    <div>
+      <button type="button" value="Compute" id="button_compute" onclick="compute()" autofocus>Compute</button>
+    </div>
+    <div>
+      <br>
+      <button type="button" value="" id="clear_button" onclick="clear_result()">Clear Result</button>
+      <button type="button" value="" id="clear_button_full" onclick="clear_result_full()">Refresh Page</button>
+    </div>
+    <hr>
+  </div>
+  <div>
+    <p style="font-size: 2rem; color: green">Results: </p>
+    <p id = "results" value=""></p>
+  </div>
+</body>
+</html>
