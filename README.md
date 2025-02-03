@@ -36,6 +36,11 @@ Links:
 - https://gpuweb.github.io/gpuweb/explainer/
 - https://webgpufundamentals.org/webgpu/lessons/webgpu-matrix-math.html
 - https://jott.live/markdown/webgpu_safari
+- https://lvngd.com/blog/webgpu-building-particle-simulation-collision-detection/
+- https://blog.logrocket.com/webgpu-accelerate-ml-workloads-browser/
+- https://www.w3.org/TR/webgpu/
+- https://www.bomberbot.com/webgpu/learn-webgpu-a-next-generation-graphics-api-for-the-web/
+- https://www.nuss-and-bolts.com/p/optimizing-a-webgpu-matmul-kernel
 
 ---
 
